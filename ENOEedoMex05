@@ -1,0 +1,131 @@
+##Estado de México 2005
+
+library (foreign)
+sdem205 <- read.dbf ("G:/Tesis/ENOE/2005/sdemt205.dbf")
+coe1t205 <- read.dbf ("G:/Tesis/ENOE/2005/coe1t205.dbf")
+coe2t205 <- read.dbf ("G:/Tesis/ENOE/2005//coe2t205.dbf")
+
+folio <- paste (sdem205$CD_A, sdem205$ENT, sdem205$CON, sdem205$V_SEL, sdem205$N_HOG, 
+                sdem205$H_MUD, sdem205$N_REN)
+
+x<-data.frame (sdem205, folio)
+
+folio<- paste(coe1t205$CD_A, coe1t205$ENT, coe1t205$CON, coe1t205$V_SEL, coe1t205$N_HOG, 
+              coe1t205$H_MUD, coe1t205$N_REN)
+x1<-data.frame(coe1t205, folio)
+
+folio<- paste(coe2t205$CD_A, coe2t205$ENT, coe2t205$CON, coe2t205$V_SEL, coe2t205$N_HOG, 
+              coe2t205$H_MUD, coe2t205$N_REN)
+x2<-data.frame(coe2t205, folio)
+
+total <- merge(x,x1,by="folio",all.x  = TRUE)
+
+EnoeTotal05 <-merge(total, x2, by="folio", all.x = TRUE)
+
+##Subset Edo Mex
+EnoeEdo05 <- subset(EnoeTotal05, EnoeTotal05$ENT.x == 15)
+
+require (questionr)
+
+##Pob total por sexo
+wtd.table (EnoeEdo05$SEX, weights=EnoeEdo05$FAC.x)
+
+##Nivel de instrucción --> 00:Ninguno 01,02,03:Preescolar primaria y secundaria
+##                         04: Prepa o bachillerato 05,06: Normal o carrera técnica 07:Profesional+
+##                        08, 09: Posgrado 99: No sabe
+wtd.table (EnoeEdo05$SEX,EnoeEdo05$CS_P13_1 ,weights=EnoeEdo05$FAC.x)
+
+##Estado conyugal --> 1,5: Unión libre o casado 2,3: Separado o divorciado 6: Soltero 4: Viudo 9: No sabe
+wtd.table (EnoeEdo05$SEX, EnoeEdo05$E_CON, weights=EnoeEdo05$FAC.x)
+
+
+##Gpos de edad
+require(car)
+
+EdadQ <- Recode(EnoeEdo05$EDA.x, "00:04=1; 05:09=2; 10:14=3 ;15:19=4; 20:24=5; 25:29=6; 30:34=7; 35:39=8; 
+                40:44=9; 45:49=10; 50:54=11; 55:59=12; 60:64=13; 65:69=14; 70:74=15; 75:79=16;
+                80:84=17; 85:97=18; 98:99=19", levels=1:19)
+
+EDADQ <- recode(EnoeEdo05$EDA.x, "00:29=1;30:34=2; 35:39=3; 
+                40:44=4; 45:49=5; 50:54=6; 55:59=7; 60:64=8; 65:69=9; 70:74=10; 75:79=11;
+                80:84=12; 85:97=13; 98:99=14", levels=1:14)
+
+wtd.table (EnoeEdo05$SEX, EnoeEdo05$EDA.x, weights=EnoeEdo05$FAC.x)
+wtd.table (EnoeEdo05$SEX, EDADQ, weights=EnoeEdo05$FAC.x)
+wtd.table(EDADQ, weights=EnoeEdo05$FAC.x)
+sum(wtd.table (EnoeEdo05$EDA.x, weights=EnoeEdo05$FAC.x))
+
+attach(EnoeEdo05)
+
+##Poblaci?n de 12 a?os o m?s
+edad<-as.numeric(as.character(EDA.x))
+pob12_05 <-subset(EnoeEdo05, (edad >= 12)&(edad<=98)& (R_DEF.x == "00") & (C_RES=="1" | C_RES=="3"))
+wtd.table (pob12_05$SEX, weights=pob12_05$FAC.x)
+
+##Poblaci?n de 15 a?os o m?s
+edad<-as.numeric(as.character(EDA.x))
+pob15_05 <-subset(EnoeEdo05, (edad >= 15)&(edad<=98)& (R_DEF.x == "00") & (C_RES=="1" | C_RES=="3"))
+wtd.table (pob15_05$SEX, weights=pob15_05$FAC.x)
+
+##PEA y PNEA
+wtd.table(pob15_05$SEX,pob15_05$CLASE1,weights=pob15_05$FAC.x)
+
+##Ocupados y desocupados
+wtd.table(pob15_05$SEX,pob15_05$CLASE2,weights=pob15_05$FAC.x)
+
+##Población ocupada 
+pobOcu <- subset(pob15_05, pob15_05$CLASE2==1)
+
+##Subordinados remunerados
+wtd.table(pobOcu$SEX, pobOcu$P3A, weights=pobOcu$FAC.x)
+
+##Subset subordinados remunerados
+pobRem <-subset(pobOcu, pobOcu$P3A==1)
+##Condición de pago // Recibió, no recibió..
+wtd.table(pobRem$SEX, pobRem$P3H,weights=pobRem$FAC.x)
+
+##Empleadores
+##Negocio o actividad por cuenta propia
+wtd.table(pobOcu$SEX, pobOcu$P3B, weights=pobOcu$FAC.x)
+##Cuenta con negocio propio
+pobEm <-subset(pobOcu, pobOcu$P3B==1)
+##Trabajador por cuenta propia/empleador
+wtd.table(pobEm$SEX, pobEm$P3D, weights=pobEm$FAC.x)
+
+##Nivel de ingresos
+wtd.table(pobOcu$SEX,pobOcu$ING7C,weights=pobOcu$FAC.x)
+
+##Duración jornada de trabajo
+wtd.table(pobOcu$SEX,pobOcu$DUR9C,weights=pobOcu$FAC.x)
+
+##Acceso a instituciones de salud // Quitar trabajadores en extranjero
+## Pob que en P4 es 4
+wtd.table(pobOcu$SEX,pobOcu$P4,weights=pobOcu$FAC.x)
+wtd.table(pobOcu$SEX,pobOcu$P6D,weights=pobOcu$FAC.x)
+
+##Tamaño de la empresa
+wtd.table(pobOcu$P3Q,weights=pobOcu$FAC.x)
+
+##Contrato
+wtd.table(pobRem$SEX,pobRem$P3J,weights=pobRem$FAC.x)
+##Tipo de contrato
+wtd.table(pobRem$SEX,pobRem$P3K1,weights=pobRem$FAC.x)
+##Desgloce contrato temporal
+wtd.table(pobRem$SEX,pobRem$P3K2,weights=pobRem$FAC.x)
+
+##Prestaciones
+##Aguinaldo
+wtd.table(pobRem$SEX,pobRem$P3L1,weights=pobRem$FAC.x)
+##Vacaciones con goce de sueldo
+wtd.table(pobRem$SEX,pobRem$P3L2,weights=pobRem$FAC.x)
+##Reparto de utilidades
+wtd.table(pobRem$SEX,pobRem$P3L3,weights=pobRem$FAC.x)
+##Ninguna de las anteriores
+wtd.table(pobRem$SEX,pobRem$P3L4,weights=pobRem$FAC.x)
+##Nada
+wtd.table(pobRem$SEX,pobRem$P3L5,weights=pobRem$FAC.x)
+##No sabe
+wtd.table(pobRem$SEX,pobRem$P3L9,weights=pobRem$FAC.x)
+
+##Sector de actividad
+wtd.table(pobOcu$SEX,pobOcu$RAMA_EST1,weights=pobOcu$FAC.x)
