@@ -1,7 +1,7 @@
 library (foreign)
-sdem205 <- read.dbf ("/media/sgr/AIDEE/PRODEP/ENOE/2005/sdemt205.dbf")
-coe1t205 <- read.dbf ("/media/sgr/AIDEE/PRODEP/ENOE/2005/coe1t205.dbf")
-coe2t205 <- read.dbf ("/media/sgr/AIDEE/PRODEP/ENOE/2005/coe2t205.dbf")
+sdem205 <- read.dbf ("G:/Tesis/ENOE/2005/sdemt205.dbf")
+coe1t205 <- read.dbf ("G:/Tesis/ENOE/2005/coe1t205.dbf")
+coe2t205 <- read.dbf ("G:/Tesis/ENOE/2005//coe2t205.dbf")
 
 folio <- paste (sdem205$CD_A, sdem205$ENT, sdem205$CON, sdem205$V_SEL, sdem205$N_HOG, 
                 sdem205$H_MUD, sdem205$N_REN)
@@ -21,7 +21,7 @@ total <- merge(x,x1,by="folio",all.x  = TRUE)
 EnoeTotal05 <-merge(total, x2, by="folio", all.x = TRUE)
 View(EnoeTotal)
 
-require (questionr)
+library(questionr)
 ##Pob total por sexo
 wtd.table (EnoeTotal05$SEX, weights=EnoeTotal05$FAC.x)
 
@@ -80,3 +80,55 @@ pobOcu <- subset(pob15_05, pob15_05$CLASE2==1)
 
 ##Subordinados remunerados
 wtd.table(pobOcu$SEX, pobOcu$P3A, weights=pobOcu$FAC.x)
+
+##Subset subordinados remunerados
+pobRem <-subset(pobOcu, pobOcu$P3A==1)
+##Condición de pago // Recibió, no recibió..
+wtd.table(pobRem$SEX, pobRem$P3H,weights=pobRem$FAC.x)
+
+##Empleadores
+##Negocio o actividad por cuenta propia
+wtd.table(pobOcu$SEX, pobOcu$P3B, weights=pobOcu$FAC.x)
+##Cuenta con negocio propio
+pobEm <-subset(pobOcu, pobOcu$P3B==1)
+##Trabajador por cuenta propia/empleador
+wtd.table(pobEm$SEX, pobEm$P3D, weights=pobEm$FAC.x)
+
+
+##Nivel de ingresos
+wtd.table(pobOcu$SEX,pobOcu$ING7C,weights=pobOcu$FAC.x)
+
+##Duración jornada de trabajo
+wtd.table(pobOcu$SEX,pobOcu$DUR9C,weights=pobOcu$FAC.x)
+
+##Acceso a instituciones de salud // Quitar trabajadores en extranjero
+## Pob que en P4 es 4
+wtd.table(pobOcu$SEX,pobOcu$P4,weights=pobOcu$FAC.x)
+wtd.table(pobOcu$SEX,pobOcu$P6D,weights=pobOcu$FAC.x)
+
+##Tamaño de la empresa
+wtd.table(pobOcu$P3Q,weights=pobOcu$FAC.x)
+
+##Contrato
+wtd.table(pobRem$SEX,pobRem$P3J,weights=pobRem$FAC.x)
+##Tipo de contrato
+wtd.table(pobRem$SEX,pobRem$P3K1,weights=pobRem$FAC.x)
+##Desgloce contrato temporal
+wtd.table(pobRem$SEX,pobRem$P3K2,weights=pobRem$FAC.x)
+
+##Prestaciones
+##Aguinaldo
+wtd.table(pobRem$SEX,pobRem$P3L1,weights=pobRem$FAC.x)
+##Vacaciones con goce de sueldo
+wtd.table(pobRem$SEX,pobRem$P3L2,weights=pobRem$FAC.x)
+##Reparto de utilidades
+wtd.table(pobRem$SEX,pobRem$P3L3,weights=pobRem$FAC.x)
+##Ninguna de las anteriores
+wtd.table(pobRem$SEX,pobRem$P3L4,weights=pobRem$FAC.x)
+##Nada
+wtd.table(pobRem$SEX,pobRem$P3L5,weights=pobRem$FAC.x)
+##No sabe
+wtd.table(pobRem$SEX,pobRem$P3L9,weights=pobRem$FAC.x)
+
+##Sector de actividad
+wtd.table(pobOcu$SEX,pobOcu$RAMA_EST1,weights=pobOcu$FAC.x)
